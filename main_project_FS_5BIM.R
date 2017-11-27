@@ -61,8 +61,9 @@ setwd(dir="C:/Users/Annie/Desktop/Bayes/")
  plot(mcmc,trace = T, density = F)
  gelman.diag(mcmc)
  autocorr.plot(mcmc[[1]])
+
  
-##### Questions 1
+##### Questions 1.a
 
 dose_to_give <- c()
 pprior_dose=c(0.05,0.15,0.333,0.333,0.333,0.333)
@@ -118,3 +119,28 @@ for(i in 1:(nb_cohorte-1)){
 }
 
 dose_to_give
+
+##### Question 1.b
+
+# prior ptox
+
+d0 <- list( a0 = 1,
+            dose = log(pprior_dose/(1 - pprior_dose)) - a0,
+            nb_ind = 3,
+            n = 6)
+
+model0 <- jags.model(file = textConnection(modelproject), data= d0,
+                     inits = inits1, n.chains = 3)
+
+
+update(model0, 3000)
+mcmc0 <- coda.samples(model0, c("theta"), n.iter = 2000 )
+mcmctot0 <- as.data.frame(as.matrix(mcmc0))
+
+ptox0 <- lapply(X = dose_star_tot, FUN = function(X) {exp(a0 + mcmctot0$theta*X)/(1 +  exp(a0 + mcmctot0$theta*X))})
+ptox0 <- as.data.frame(ptox0)
+
+for(p in 1:5){
+  hist(ptox0[,p],main=paste("Dose :",as.character(dose_tot[p])))
+  abline(v=pprior_dose_tot[i],col="red")
+}
