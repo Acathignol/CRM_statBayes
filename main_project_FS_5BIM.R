@@ -172,7 +172,7 @@ modelproject2 <-
   nb_cohorte = 6
   
   
-  for(i in 1:(nb_cohorte-5)){
+  for(i in 1:(nb_cohorte-1)){
     
     data4jags <- list(
       ntox = ntox[1:i] ,
@@ -203,8 +203,8 @@ modelproject2 <-
     mcmc <- coda.samples(model,c("p0","gamma"),n.iter = 10000, thin = 3)
     
     # Estimation des parametres a posteriori
-    S=summary(mcmc)
-    plot(mcmc,trace = T, density = T)
+    summary(mcmc)
+    plot(mcmc,trace = F, density = T)
     # gelman.diag(mcmc)
     #autocorr.plot(mcmc[[1]])
     
@@ -219,8 +219,8 @@ modelproject2 <-
     }
     
     ptox_tot = lapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot)
+    hist(ptox_tot[[3]])
     hist(ptox_tot[[4]])
-    Snan=sum(is.nan(ptox_tot[[4]]))
     
     med_ptox=c()
     for(j in 1:5){
@@ -231,5 +231,6 @@ modelproject2 <-
     
   }  
   
+  dose_to_give
   
 
