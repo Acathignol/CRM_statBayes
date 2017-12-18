@@ -1,3 +1,5 @@
+rm(list=ls())
+
 ## PROJET STATS BAYESIENNES
 
 library(rjags)
@@ -165,7 +167,6 @@ modelproject2 <-
 
   dose_to_give <- c()
   dose_init=c(0.5,3,5,5,5,5)
-  a0 = 1
   ntox = c(0,1,1,0,1,2)
   dose_tot = c(0.5,1,3,5,6)
   nb_cohorte = 6
@@ -175,7 +176,7 @@ modelproject2 <-
     
     data4jags <- list(
       ntox = ntox[1:i] ,
-      dmin=0.5, dmax= 6 , pm=0.33,
+      dmin=0.55, dmax= 6 , pm=0.33,
       dose = dose_init[1:i],
       nb_ind = 3,
       n = i
@@ -184,9 +185,9 @@ modelproject2 <-
     
     inits1 <- 
       list(
-        list(p0=0.1,gamma=5),
+        list(p0=0.1,gamma=4),
         list(p0=0.3,gamma=3.5),
-        list(p0=0.2,gamma=1)
+        list(p0=0.2,gamma=1.5)
       )
     
     
@@ -203,7 +204,7 @@ modelproject2 <-
     
     # Estimation des parametres a posteriori
     S=summary(mcmc)
-    plot(mcmc,trace = F, density = T)
+    plot(mcmc,trace = T, density = T)
     # gelman.diag(mcmc)
     #autocorr.plot(mcmc[[1]])
     
@@ -219,6 +220,7 @@ modelproject2 <-
     
     ptox_tot = lapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot)
     hist(ptox_tot[[4]])
+    Snan=sum(is.nan(ptox_tot[[4]]))
     
     med_ptox=c()
     for(j in 1:5){
