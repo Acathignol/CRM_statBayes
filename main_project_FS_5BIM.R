@@ -3,8 +3,6 @@ rm(list=ls())
 ## PROJET STATS BAYESIENNES
 
 library(rjags)
-setwd(dir="C:/Users/Annie/Desktop/Bayes/")
-
 
  modelproject <-
    "model
@@ -77,6 +75,13 @@ dose_star_tot = log(pprior_dose_tot/(1 - pprior_dose_tot)) - a0
 
 nb_cohorte = 6
 
+inits1 <- 
+  list(
+    list(theta = 0.5),
+    list(theta = 1.5),
+    list(theta = 2)
+  )
+
 for(i in 1:(nb_cohorte-1)){
   
   data4jags <- list(
@@ -86,15 +91,6 @@ for(i in 1:(nb_cohorte-1)){
     nb_ind = 3,
     n = i
   )
-  
-  
-  inits1 <- 
-    list(
-      list(theta = 0.5),
-      list(theta = 1.5),
-      list(theta = 2)
-    )
-  
   
   
   # Simulation des chaines de Markov
@@ -171,6 +167,20 @@ modelproject2 <-
   dose_tot = c(0.5,1,3,5,6)
   nb_cohorte = 6
   
+  inits1 <- 
+    list(
+      list(p0=0.1,gamma=4),
+      list(p0=0.3,gamma=3.5),
+      list(p0=0.2,gamma=1.5)
+    )
+  
+  calc_p_tox <- function(mcmc,X){
+    theta <- log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))/(0.5-mcmc$gamma)
+    a0 <- log(0.33/(1-0.33))-log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))*mcmc$gamma/(0.5-mcmc$gamma)
+    return (exp(a0 + theta*X)/(1 +  exp(a0 + theta*X)))
+    
+  }
+  
   
   for(i in 1:(nb_cohorte-1)){
     
@@ -181,16 +191,6 @@ modelproject2 <-
       nb_ind = 3,
       n = i
     )
-    
-    
-    inits1 <- 
-      list(
-        list(p0=0.1,gamma=4),
-        list(p0=0.3,gamma=3.5),
-        list(p0=0.2,gamma=1.5)
-      )
-    
-    
     
     # Simulation des chaines de Markov
     model <- jags.model(file =textConnection(modelproject2),data = data4jags, n.chains=3,init=inits1)
@@ -210,14 +210,6 @@ modelproject2 <-
     
     mcmctot = as.data.frame(as.matrix(mcmc))
     
-    
-    calc_p_tox <- function(mcmc,X){
-      theta <- log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))/(0.5-mcmc$gamma)
-      a0 <- log(0.33/(1-0.33))-log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))*mcmc$gamma/(0.5-mcmc$gamma)
-      return (exp(a0 + theta*X)/(1 +  exp(a0 + theta*X)))
-      
-    }
-    
     ptox_tot = lapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot)
     hist(ptox_tot[[3]])
     hist(ptox_tot[[4]])
@@ -233,4 +225,246 @@ modelproject2 <-
   
   dose_to_give
   
+  
+  ## Sans données
+  
+  d0 <- list( dmin=0.55, dmax= 6 , pm=0.33,
+              dose = dose_init,
+              nb_ind = 3,
+              n = 6)
+  
+  model0 <- jags.model(file = textConnection(modelproject2), data= d0,
+                       inits = inits1, n.chains = 3)
+  
+  
+  update(model0, 3000)
+  mcmc0 <- coda.samples(model0,c("p0","gamma"),n.iter = 10000, thin = 3)
+  mcmctot0 <- as.data.frame(as.matrix(mcmc0))
+  plot(mcmc0,trace=F)
+  
+  ptox2_0 = lapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot0)
+  ptox2_0 <- as.data.frame(ptox2_0)
+  
+  par(mfrow=c(5,2))
+  
+  for(p in 1:5){
+    hist(ptox0[,p],main=paste("Modele 1, Dose :",as.character(dose_tot[p])),breaks=30)
+    abline(v=pprior_dose_tot[p],col="red")
+    hist(ptox2_0[,p],main=paste("Modele 2, Dose :",as.character(dose_tot[p])),breaks=30)
+    abline(v=pprior_dose_tot[p],col="red")
+  }
+  
+################ CHANGEMENT REGLE D'ARRET = Question 2
+  ##### REGLE 1 ######
+   # On calcule la ptox mediane de la dose minimale ainsi que son intervalle de confiance à 90%, 
+  # il faut que l'intervalle soit superieur a 0.33 ie quantile(5%) >0.33
+  
+  # Modele 1 
+
+  dose_to_give <- c()
+  pprior_dose=c(0.05,0.15,0.333,0.333,0.333,0.333)
+  a0 = 1
+  ntox = c(0,1,1,0,1,2)
+  dose_tot = c(0.5,1,3,5,6)
+  pprior_dose_tot = c(0.05,0.1,0.15,0.333,0.5)
+  dose_star_tot = log(pprior_dose_tot/(1 - pprior_dose_tot)) - a0
+  
+  nb_cohorte = 6
+
+  for(i in 1:(nb_cohorte-1)){
+  #for(i in 1){
+    
+    data4jags <- list(
+      ntox = ntox[1:i] ,
+      a0 = 1,
+      dose = log(pprior_dose[1:i]/(1 - pprior_dose[1:i])) - a0,
+      nb_ind = 3,
+      n = i
+    )
+    
+    
+    inits1 <- 
+      list(
+        list(theta = 0.5),
+        list(theta = 1.5),
+        list(theta = 2)
+      )
+    
+  
+    # Simulation des chaines de Markov
+    model <- jags.model(file =textConnection(modelproject),data = data4jags, n.chains=3, inits = inits1)
+    update(model,3000)
+    mcmc <- coda.samples(model,c("theta"),n.iter = 10000, thin = 3)
+    
+    
+    mcmctot = as.data.frame(as.matrix(mcmc))
+    ptox_tot = lapply(X = dose_star_tot, FUN = function(X) {median(exp(a0 + mcmctot$theta*X)/(1 +  exp(a0 + mcmctot$theta*X)))})
+    dose_to_give[i] <- dose_tot[sum(ptox_tot<=0.33)] 
+
+    ptox_dose_min=exp(a0 + mcmctot$theta*dose_star_tot[1])/(1 +  exp(a0 + mcmctot$theta*dose_star_tot[1]))
+    hist(ptox_dose_min)
+    ptox_inf =  quantile( ptox_dose_min,0.05)
+  }
+  
+dose_to_give
+  
+  
+  # Modele 2
+
+
+dose_to_give <- c()
+dose_init=c(0.5,3,5,5,5,5)
+ntox = c(0,1,1,0,1,2)
+dose_tot = c(0.5,1,3,5,6)
+nb_cohorte = 6
+
+inits1 <- 
+  list(
+    list(p0=0.1,gamma=4),
+    list(p0=0.3,gamma=3.5),
+    list(p0=0.2,gamma=1.5)
+  )
+
+calc_p_tox <- function(mcmc,X){
+  theta <- log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))/(0.5-mcmc$gamma)
+  a0 <- log(0.33/(1-0.33))-log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))*mcmc$gamma/(0.5-mcmc$gamma)
+  return (exp(a0 + theta*X)/(1 +  exp(a0 + theta*X)))
+}
+
+
+for(i in 1:(nb_cohorte-1)){
+  
+  data4jags <- list(
+    ntox = ntox[1:i] ,
+    dmin=0.55, dmax= 6 , pm=0.33,
+    dose = dose_init[1:i],
+    nb_ind = 3,
+    n = i
+  )
+  
+  
+  # Simulation des chaines de Markov
+  model <- jags.model(file =textConnection(modelproject2),data = data4jags, n.chains=3,init=inits1)
+  
+  # Phase de chauffe
+  update(model,3000)
+  mcmc <- coda.samples(model,c("p0","gamma"),n.iter = 10000, thin = 3)
+  mcmctot = as.data.frame(as.matrix(mcmc))
+  
+  ptox_inf <- quantile(mcmctot$p0,0.05)
+  
+  dose_to_give[i] <- quantile( ptox_dose_min,0.05)
+  
+}  
+
+dose_to_give
+
+
+
+
+
+
+##### REGLE 2 ######
+# On calcule la ptox mediane de la dose maximale ainsi que son intervalle de confiance à 90%, 
+# il faut que l'intervalle soit inferieur a 0.33 ie quantile(95%) <0.33
+
+# Modele 1 
+
+dose_to_give <- c()
+pprior_dose=c(0.05,0.15,0.333,0.333,0.333,0.333)
+a0 = 1
+ntox = c(0,1,1,0,1,2)
+dose_tot = c(0.5,1,3,5,6)
+pprior_dose_tot = c(0.05,0.1,0.15,0.333,0.5)
+dose_star_tot = log(pprior_dose_tot/(1 - pprior_dose_tot)) - a0
+
+nb_cohorte = 6
+
+for(i in 1:(nb_cohorte-1)){
+  #for(i in 1){
+  
+  data4jags <- list(
+    ntox = ntox[1:i] ,
+    a0 = 1,
+    dose = log(pprior_dose[1:i]/(1 - pprior_dose[1:i])) - a0,
+    nb_ind = 3,
+    n = i
+  )
+  
+  
+  inits1 <- 
+    list(
+      list(theta = 0.5),
+      list(theta = 1.5),
+      list(theta = 2)
+    )
+  
+  
+  # Simulation des chaines de Markov
+  model <- jags.model(file =textConnection(modelproject),data = data4jags, n.chains=3, inits = inits1)
+  update(model,3000)
+  mcmc <- coda.samples(model,c("theta"),n.iter = 10000, thin = 3)
+  
+  
+  mcmctot = as.data.frame(as.matrix(mcmc))
+  ptox_tot = lapply(X = dose_star_tot, FUN = function(X) {median(exp(a0 + mcmctot$theta*X)/(1 +  exp(a0 + mcmctot$theta*X)))})
+  dose_to_give[i] <- dose_tot[sum(ptox_tot<=0.33)] 
+  
+  ptox_dose_max=exp(a0 + mcmctot$theta*dose_star_tot[5])/(1 +  exp(a0 + mcmctot$theta*dose_star_tot[5]))
+  hist(ptox_dose_max)
+  ptox_sup =  quantile( ptox_dose_max,0.90)
+}
+
+dose_to_give
+
+
+# Modele 2
+
+
+dose_to_give <- c()
+dose_init=c(0.5,3,5,5,5,5)
+ntox = c(0,1,1,0,1,2)
+dose_tot = c(0.5,1,3,5,6)
+nb_cohorte = 6
+
+inits1 <- 
+  list(
+    list(p0=0.1,gamma=4),
+    list(p0=0.3,gamma=3.5),
+    list(p0=0.2,gamma=1.5)
+  )
+
+calc_p_tox <- function(mcmc,X){
+  theta <- log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))/(0.5-mcmc$gamma)
+  a0 <- log(0.33/(1-0.33))-log((mcmc$p0*(1-0.33))/(0.33*(1-mcmc$p0)))*mcmc$gamma/(0.5-mcmc$gamma)
+  return (exp(a0 + theta*X)/(1 +  exp(a0 + theta*X)))
+}
+
+
+for(i in 1:(nb_cohorte-1)){
+  
+  data4jags <- list(
+    ntox = ntox[1:i] ,
+    dmin=0.55, dmax= 6 , pm=0.33,
+    dose = dose_init[1:i],
+    nb_ind = 3,
+    n = i
+  )
+  
+  
+  # Simulation des chaines de Markov
+  model <- jags.model(file =textConnection(modelproject2),data = data4jags, n.chains=3,init=inits1)
+  
+  # Phase de chauffe
+  update(model,3000)
+  mcmc <- coda.samples(model,c("p0","gamma"),n.iter = 10000, thin = 3)
+  mcmctot = as.data.frame(as.matrix(mcmc))
+
+  ptox_dose_max = calc_p_tox(mcmctot,dose_tot[5])
+  ptox_sup <- quantile( ptox_dose_max,0.05)
+
+}  
+
+dose_to_give
+
 
