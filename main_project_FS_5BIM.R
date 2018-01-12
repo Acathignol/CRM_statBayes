@@ -250,15 +250,15 @@ modelproject <-
   mcmctot0 <- as.data.frame(as.matrix(mcmc0))
   plot(mcmc0,trace=F)
   
-  ptox2_0 = lapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot0)
+  ptox2_0 = sapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot0)
   ptox2_0 <- as.data.frame(ptox2_0)
   
   par(mfrow=c(5,2)) #### doesn't work
   for(p in 1:5){
-    hist(ptox0[,p],main=paste("Modele 1, Dose :",as.character(dose_tot[p])),breaks=30)
-    abline(v=pprior_dose_tot[p],col="red")
-    hist(ptox2_0[,p],main=paste("Modele 2, Dose :",as.character(dose_tot[p])),breaks=30)
-    abline(v=pprior_dose_tot[p],col="red")
+    hist(ptox0[,p],main=paste("Modele 1, Dose :",as.character(dose_tot[p])),breaks=30, col = "grey")
+    abline(v=pprior_dose_tot[p],col="red", lwd=2)
+    hist(ptox2_0[,p],main=paste("Modele 2, Dose :",as.character(dose_tot[p])),breaks=30, col = "grey")
+    abline(v=pprior_dose_tot[p],col="red", lwd=2)
   }
   
   ################ CHANGEMENT REGLE D'ARRET = Question 2

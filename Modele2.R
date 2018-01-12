@@ -27,6 +27,7 @@ modelproject2 <-
   regle2 <- c()
   
   dose_init=c(0.5,3,5,5,5,5)
+  pprior_dose_tot = c(0.05,0.1,0.15,0.333,0.5)
   ntox = c(0,1,1,0,1,2)
   dose_tot = c(0.5,1,3,5,6)
   nb_cohorte = 6
@@ -110,7 +111,7 @@ modelproject2 <-
   mcmctot0 <- as.data.frame(as.matrix(mcmc0))
   #plot(mcmc0,trace=F)
   
-  ptox0 = lapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot)
+  ptox0 = sapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot)
   ptox0 <- as.data.frame(ptox0)
   
   par(mfrow=c(3,2))  

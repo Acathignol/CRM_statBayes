@@ -72,7 +72,6 @@ for(i in 1:(nb_cohorte)){
   #Regle arret 2
   ptox_dose_max=exp(a0 + mcmctot$theta*dose_star_tot[5])/(1 +  exp(a0 + mcmctot$theta*dose_star_tot[5]))
   regle2[i] =  sum(ptox_dose_max<0.33)/length(ptox_dose_max)
-  hist(ptox_dose_max)
   
 }
 
