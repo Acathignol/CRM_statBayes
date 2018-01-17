@@ -97,7 +97,7 @@ modelproject2 <-
   dose_to_give
   
   
-  ## Sans données
+  ## Sans donnÃ©es
   
   d0 <- list( dmin=0.55, dmax= 6 , pm=0.33,
               dose = dose_init,
@@ -113,7 +113,7 @@ modelproject2 <-
   mcmctot0 <- as.data.frame(as.matrix(mcmc0))
   #plot(mcmc0,trace=F)
   
-  ptox0 = sapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot)
+  ptox0 = sapply(X = dose_tot, FUN = calc_p_tox, mcmc=mcmctot0)
   ptox0 <- as.data.frame(ptox0)
   
   par(mfrow=c(3,2))  
@@ -124,16 +124,16 @@ modelproject2 <-
   }  
   
   ##### REGLE 1 ######
-  # On calcule la ptox mediane de la dose minimale ainsi que son intervalle de confiance à 90%, 
+  # On calcule la ptox mediane de la dose minimale ainsi que son intervalle de confiance Ã  90%, 
   # il faut que l'intervalle soit superieur a 0.33 ie quantile(5%) >0.33
   if (sum(regle1>=0.9)==0) {
-    "Regle 1 : Pas d'arrêt, la probabilite de toxicite severe est toujours inferieure a 33% pour la dose minimale"}else  {
+    "Regle 1 : Pas d'arrÃªt, la probabilite de toxicite severe est toujours inferieure a 33% pour la dose minimale"}else  {
       paste(" Regle 1 : On s'arrete a la cohorte",toString(min(which(regle1 >= 0.9))))}
   
   ##### REGLE 2 ######
-  # On calcule la ptox mediane de la dose maximale ainsi que son intervalle de confiance à 90%, 
+  # On calcule la ptox mediane de la dose maximale ainsi que son intervalle de confiance Ã  90%, 
   # il faut que l'intervalle soit inferieur a 0.33 ie quantile(95%) <0.33
   if (sum(regle2>=0.9)==0) {
-    "Regle 2 : Pas d'arrêt, la probabilite de toxicite severe est toujours superieur a 33% pour la dose maximale"}else  {
+    "Regle 2 : Pas d'arrÃªt, la probabilite de toxicite severe est toujours superieur a 33% pour la dose maximale"}else  {
       paste(" Regle 2 : On s'arrete a la cohorte",toString(min(which(regle1 >= 0.9))))}
   
