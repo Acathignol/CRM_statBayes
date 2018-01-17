@@ -46,8 +46,8 @@ modelproject2 <-
     
   }
   
-  
-  for(i in 1:(nb_cohorte-1)){
+  par(mfrow=c(3,2))
+  for(i in 1:(nb_cohorte)){
     
     data4jags <- list(
       ntox = ntox[1:i] ,
@@ -69,9 +69,6 @@ modelproject2 <-
     
     # Estimation des parametres a posteriori
     summary(mcmc)
-    # plot(mcmc)
-    # gelman.diag(mcmc)
-    # autocorr.plot(mcmc[[1]])
     
     mcmctot = as.data.frame(as.matrix(mcmc))
     
@@ -84,12 +81,17 @@ modelproject2 <-
     
     dose_to_give[i] <- dose_tot[sum(med_ptox<=0.33)] 
 
+    
     # Regle d'arret 1
     regle1[i] =  sum(mcmctot$p0>0.33)/length(mcmctot$p0)
+    hist(mcmctot$p0,main= paste("Dose minimale, Cohorte ",as.character(i)),xlab="Probabilites de toxicite predites",col = "grey")
+    abline(v=0.33,col="red", lwd=2)  
     
     # Regle d'arret 2
     ptox_dose_max = calc_p_tox(mcmctot,dose_tot[5])
     regle2[i] =  sum(ptox_dose_max<0.33)/length(ptox_dose_max)
+    hist(ptox_dose_max,main=paste("Dose maximale, Cohorte ",as.character(i)),xlab="Probabilites de toxicite predites",col = "grey")
+    abline(v=0.33,col="red", lwd=2) 
   }  
   
   dose_to_give
